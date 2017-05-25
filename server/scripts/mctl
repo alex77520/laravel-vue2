@@ -1,0 +1,339 @@
+## --------------------------------------------
+## 更新辅助脚本
+## @author linkailian
+## @date 2016-08-27
+## --------------------------------------------
+
+#!/bin/bash
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+HOME=/root
+export HOME
+
+## 默认帮助
+help_default()
+{
+    echo "使用语法: $0 cmd [params, ...]"
+    echo 'cmd包括: '
+    echo '      init_server'
+    echo '      update_server'
+    echo '      init_db_config'
+    echo '      init_nginx_conf'
+}
+
+## 初始化nginx的说明
+help_init_nginx_conf()
+{
+    echo "使用语法: $0 init_nginx_conf 域名 本地目录"
+    echo "注意：这是个本地命令"
+    echo "配置位置为 /data/conf/nginx/vhost/"
+}
+
+## 更新服务器的说明
+help_update_server()
+{
+    echo "使用语法: $0 update_server 项目名 远程机器IP 远程目录 用户名 composer(如果不需要更新composer则最后一个参数不加)"
+    echo "eg:bash $0 update_server onlineExam 192.168.8.237"
+    echo "eg:bash $0 update_server onlineExam 192.168.8.237 /data/web/onlineExam admin true"
+}
+
+## 初始化服务器的说明
+help_init_server()
+{
+    echo "使用语法: $0 init_server 项目名 远程机器IP 域名  远程目录 用户名" 
+    echo "eg:bash $0 init_server onlineExam 192.168.8.237"
+    echo "eg:bash $0 init_server onlineExam 192.168.8.237 online-exam.mingchao.com /data/web/onlineExam mingchao"
+}
+
+
+## 初始化db配置的说明
+help_init_db_config()
+{
+    echo "使用语法: $0 init_db_config"
+}
+
+help()
+{
+    CMD=$1
+    case $CMD in
+        init_nginx_conf) help_init_nginx_conf ;;
+        init_db_config) help_init_db_config ;;
+        update_server) help_update_server ;;
+        init_server) help_init_server ;;
+        update_auth) help_update_auth ;;
+        *) help_default;;
+    esac
+    exit
+}
+
+## 初始化nginx配置
+init_nginx_conf()
+{
+    DOMAIN_NAME=$1
+
+    ROOT_DIR=$2
+    if [ "$DOMAIN_NAME" == "" -o "$ROOT_DIR" == "" ] ; then
+        help init_nginx_conf
+    fi
+    SRC_CONF=init/server.conf.tpl
+    mkdir -p /data/conf/nginx/vhost/
+    DEST_CONFIG=/data/conf/nginx/vhost/${DOMAIN_NAME}.conf
+    if [ -f $DEST_CONFIG ] ; then
+        echo "${DEST_CONFIG} 目标配置已存在"
+        return
+    fi
+    /bin/cp $SRC_CONF $DEST_CONFIG
+    sed -e "s/DOMAIN_NAME/${DOMAIN_NAME}/g" -i $DEST_CONFIG
+    WWW_ROOT_DIR=`echo ${ROOT_DIR} | sed 's/\//\\\\\//g'`
+    sed -e "s/ROOT_DIR/${WWW_ROOT_DIR}\/public/g" -i $DEST_CONFIG
+    /root/nginx_reload
+    echo 'nginx 配置初始化完成'
+}
+
+
+init_db_config()
+{
+    cd init
+    /usr/bin/php init_db.php $1
+    cd ../..
+    /usr/bin/php artisan key:generate
+    /usr/bin/php artisan migrate --force
+    #/usr/bin/php artisan db:seed
+}
+
+## 更新composer
+update_composer()
+{   
+    COMPOSER_UPDATE=$1
+    if [ "$COMPOSER_UPDATE" == 'true' ] ; then
+        echo "update composer begin"
+        type /usr/local/bin/composer >/dev/null 2>&1 || { 
+            echo "require composer but it's not installed.  Aborting";
+            exit;
+        }
+        if [ ! -f "composer.json" ] ; then
+            echo "composer.json 不存在"
+        else
+            if [ ! -f "composer.lock" ] ; then
+                /usr/local/bin/composer install --prefer-source
+            else
+                /usr/local/bin/composer update --prefer-source
+            fi
+            /usr/local/bin/composer dump-autoload --optimize
+            echo "update composer end"
+        fi
+    fi
+}
+
+## 更新日志权限
+update_log_auth()
+{
+    cd /data/logs/webapp
+    /bin/touch mbd_conf_debug.log
+    chown www:www mbd_conf_debug.log
+    chmod 755 mbd_conf_debug.log
+}
+## 授权读写权限
+update_auth()
+{
+    SERVER_DIR=$1
+    chown -R www:www ${SERVER_DIR}
+    cd ${SERVER_DIR}
+    ## 给缓存文件添加读写权限
+    ## chown -R www:www ${SERVER_DIR}
+    chmod +x artisan
+    chmod +x scripts/mctl
+    chmod 755 storage -R
+    chown www:www storage -R
+    chown www:www bootstrap/cache -R
+    ## chown -R www:www ${SERVER_DIR}
+}
+
+
+update_server()
+{
+    SERVER_NAME=$1  ## 系统名称
+    IP=$2           
+    SERVER_DIR=$3   ## 后台代码放到那个目录
+    PUBLISH_USER=$4 ##用户
+
+    UPDATE_COMPOSER=$5 ## 是否要更新vendor文件夹 composer
+    
+
+    if [ "$UPDATE_COMPOSER" == "" ] ; then 
+        UPDATE_COMPOSER=false
+    fi
+    LOG_DIR=/data/logs/webapp
+    if [ "$IP" == "" ] ; then
+        help update_server
+    fi
+
+    if [ "$SERVER_DIR" == "" ] ; then
+        echo "远程目录不能为空"
+        exit
+    fi
+
+    cd ../
+    ## 删除文件
+    rm -rf release
+    mkdir release
+    echo "正在打包database app routes public resources config scripts 目录"
+    /bin/cp -rf database app routes public resources config scripts ssl release 
+    if [ "$UPDATE_COMPOSER" == 'true' ] ; then
+        ## update_composer $UPDATE_COMPOSER
+        echo "打包vendor"
+        /bin/cp -rf vendor release
+    else 
+        echo "不打包vendor"
+    fi
+
+    ## 去除杂质
+    find release -type d -name "*git*" | xargs rm -rf
+    Date=`date "+%Y-%m-%d-%H%M%S"`
+    TAR_FILE=web.exam.$Date.tar.gz
+    ## 打包文件
+    cd release
+
+    if [ "$UPDATE_COMPOSER" == 'true' ] ; then
+        tar cfz $TAR_FILE database app routes public config resources vendor scripts ssl --exclude=public/upload
+    else 
+        tar cfz $TAR_FILE database app routes public config resources scripts ssl --exclude=public/upload
+    fi
+
+    ## ssh -p61618 $PUBLISH_USER@$IP "mkdir -p $SERVER_DIR"
+    if [ $? -gt 0 ] ; then
+        echo "远程创建目录失败"
+        exit
+    else
+        ## scp -P 61618 $TAR_FILE $PUBLISH_USER@$IP:$SERVER_DIR
+        scp -P 61618 $TAR_FILE $PUBLISH_USER@$IP:/data/tmp
+    fi
+
+    if [ $? -gt 0 ] ; then
+        echo "scp 远程拷贝失败"
+        echo $SERVER_DIR
+        exit
+    else
+        if [ "$UPDATE_COMPOSER" == 'true' ] ; then
+            ssh -p61618 $PUBLISH_USER@$IP "sudo mv /data/tmp/${TAR_FILE} $SERVER_DIR;cd ${SERVER_DIR};sudo mkdir -p /data/backup/${SERVER_NAME}/; sudo mkdir -p /data/tmp/${SERVER_NAME}/;sudo tar cfz exam_backup_${Date}.tar.gz database vendor config app routes public resources scripts ssl --exclude=public/upload;sudo mv exam_backup_${Date}.tar.gz /data/backup/${SERVER_NAME}/;sudo mv database vendor config app routes resources scripts ssl /data/tmp/${SERVER_NAME}/;cd public;ls |grep -v upload |grep -v storage | xargs -i rm -rf {};cd ${SERVER_DIR};sudo tar xfz $TAR_FILE;sudo rm -f *.tar.gz" 
+            
+            ## 给文件夹赋予读写权限
+            ssh -p61618 $PUBLISH_USER@$IP "cd ${SERVER_DIR}/scripts; sudo ./mctl update_auth ${SERVER_DIR}"
+
+        else 
+            ssh -p61618 $PUBLISH_USER@$IP "sudo mv /data/tmp/${TAR_FILE} $SERVER_DIR;cd ${SERVER_DIR};sudo mkdir -p /data/backup/${SERVER_NAME}/;sudo mkdir -p /data/tmp/${SERVER_NAME}/;sudo tar cfz exam_backup_${Date}.tar.gz database config app routes public resources scripts ssl --exclude=public/upload;sudo mv exam_backup_${Date}.tar.gz /data/backup/${SERVER_NAME}/;sudo mv database config app routes resources scripts ssl /data/tmp/${SERVER_NAME}/;cd public;ls |grep -v upload |grep -v storage | xargs -i rm -rf {};cd ${SERVER_DIR};sudo tar xfz $TAR_FILE;sudo mv *.tar.gz /data/tmp/${SERVER_NAME}/"
+
+            ## 给文件夹赋予读写权限
+            ssh -p61618 $PUBLISH_USER@$IP "cd ${SERVER_DIR}/scripts; sudo ./mctl update_auth ${SERVER_DIR}"
+            rm -rf release
+       fi
+    fi
+
+    if [ $? -gt 0 ] ; then
+        echo "远程解压失败"
+        exit
+    fi
+    echo "更新 $IP 完成"  
+    cd ../
+    rm -rf release
+}
+
+## 初始化一个项目
+init_server()
+{
+    SERVER_NAME=$1   
+    IP=$2
+    DOMAIN=$3
+    SERVER_DIR=$4
+    PUBLISH_USER=$5
+    if [ "$1" == "" ] ; then
+        echo "项目名不能为空"
+        help init_server
+    fi
+    if [ "$2" == "" ] ; then
+        echo "ip不能为空"
+        help init_server
+    fi
+    ## 站点域名
+    if [ "$3" == "" ] ; then
+        echo "域名不能为空"
+        help init_server
+    fi
+    if [ "$4" == "" ] ; then
+        echo "目录不能为空"
+    fi
+
+    if [ "$5" == "" ] ; then
+        echo "目录不能为空"
+    fi
+
+    cd ../
+    ## 删除文件
+    rm -rf release
+    mkdir -p release
+    cp -rf .env.example app routes config vendor artisan database resources bootstrap server.php public scripts ssl release 
+    ## 去除杂质
+    find release -type d -name "*git*" | xargs rm -rf
+    Date=`date "+%Y-%m-%d-%H%M%S"`
+    TAR_FILE=admin.server.$Date.tar.gz
+    ## 打包文件
+    cd release
+    tar cfz $TAR_FILE .env.example app routes config vendor artisan database resources bootstrap server.php public scripts ssl
+    ssh -p61618 $PUBLISH_USER@$IP "mkdir -p $SERVER_DIR;"
+    ## ssh -p61618 $PUBLISH_USER@$IP "cd ${SERVER_DIR}/scripts; sudo ./mctl update_auth ${SERVER_DIR} ${LOG_DIR}"
+    if [ $? -gt 0 ] ; then
+        echo "远程创建目录失败"
+        exit
+    else
+       ## scp -P 61618 $TAR_FILE $PUBLISH_USER@$IP:$SERVER_DIR
+       scp -P 61618 $TAR_FILE $PUBLISH_USER@$IP:/data/tmp
+    fi
+        
+    if [ $? -gt 0 ] ; then
+        echo "远程copy文件失败"
+        exit
+    else
+    ssh -p61618 $PUBLISH_USER@$IP "sudo mv /data/tmp/${TAR_FILE} $SERVER_DIR;cd $SERVER_DIR;sudo tar xfz $TAR_FILE;sudo mkdir -p /data/tmp/${GAME_NAME}_${Date};sudo mv -f *.tar.gz /data/tmp;sudo cp .env.example .env;sudo mkdir -p storage/framework/sessions;sudo mv *.tar.gz /data/tmp/${GAME_NAME}_${Date}"
+     ## 给文件夹赋予读写权限
+       ssh -p61618 $PUBLISH_USER@$IP "cd ${SERVER_DIR}/scripts; sudo ./mctl update_auth ${SERVER_DIR} ${LOG_DIR}"
+
+    fi
+    
+    if [ $? -gt 0 ] ; then
+        echo "远程文件操作失败"
+        exit
+    fi
+    ## 初始化db 配置
+    ssh -p61618 $PUBLISH_USER@$IP "cd $SERVER_DIR/scripts; bash mctl init_db_config"
+
+    ## 初始化nginx 配置
+    ssh -p61618 $PUBLISH_USER@$IP "cd $SERVER_DIR/scripts; bash mctl init_nginx_conf ${DOMAIN} ${SERVER_DIR}"
+
+    ## 建立日志文件
+    ssh -p61618 $PUBLISH_USER@$IP "cd $SERVER_DIR/scripts; bash mctl update_log_auth"
+
+    if [ $? -gt 0 ] ; then
+        echo "nginx配置失败"
+        exit
+    else
+        echo "初始化 $IP 完成" 
+    fi
+    echo "初始化信息如下："
+    echo "HOSTS：${IP}   ${DOMAIN}"
+    echo "后台目录为：${SERVER_DIR}"
+}
+
+
+## 获取子shell命令
+TARGET=$1
+shift
+case $TARGET in
+    update_server) update_server $*;;
+    init_server) init_server $*;;
+    init_db_config) init_db_config $*;;
+    init_nginx_conf) init_nginx_conf $*;;
+    update_log_auth) update_log_auth $*;;
+    update_auth) update_auth $*;;
+    *) help $*;;
+esac

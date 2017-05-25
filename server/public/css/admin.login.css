@@ -1,0 +1,49 @@
+.login-top {
+  margin-top: 120px;
+}
+
+.h5 {
+  text-decoration: underline;
+  color: #3071A9;
+}
+
+#username,
+#password {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0px;
+  border-bottom-left-radius: 0px;
+  background-color: #F5F5F5;
+}
+
+.form-signin .form-control {
+  position: relative;
+  height: auto;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  font-size: 16px;
+}
+
+.btn {
+  margin-top: 20px;
+}
+
+.form-signin .form-signin-heading {
+  height: 55px;
+  margin: 0px auto 10px;
+}
+
+.modal-title {
+  color: #e33;
+}
+
+.footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  margin-top: 100px;
+  color: #777;
+  text-align: center;
+  border-top: 1px solid #e5e5e5;
+}

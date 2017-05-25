@@ -1,0 +1,114 @@
+body { 
+    padding-top: 70px;
+    font-family: "Microsoft YaHei", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+*{ font-family: "Microsoft YaHei", Helvetica, Arial, sans-serif; }
+a {
+    cursor: pointer;
+}
+
+a:link, a:visited, a:hover, a:active {
+    text-decoration:none;
+}
+
+ul,li,dl,dt,dd{ list-style:none;margin:0;padding:0; }
+.nav-navbar-brand {
+    line-height:18px;
+    font-size:18px;
+    float:left;
+    height:50px;
+    padding:5px 10px;
+}
+
+
+
+
+.footer {
+    width: 100%;
+    //position: absolute;
+    bottom: 0px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    margin-top: 80px;
+    color: #777;
+    text-align: center;
+    border-top: 1px solid #E5E5E5;
+    background-color: #EFEFEF;
+}
+
+.header { width:100% }
+.header .headerInfo { text-align:center;font-weight:bolder;margin-top:17px;display: block; }
+.header .headerInfo span { color:#33b8fb; }
+
+.layout { margin-bottom:30px;position:relative }
+.layout .masthead { text-align:center;line-height: 35px;padding-bottom:15px }
+.layout .commontime { margin-bottom:6px }
+.layout .examInfo{ line-height:30px }
+.layout .examInfooffset { margin-left:20%;border: 1px solid #ccc;border-radius:6px;padding-left: 25px; }
+.layout .examsoffset{ margin-left:20%;margin-top: 30px; }
+.layout .examInfooffset_b { margin-left:21%;border: 1px solid #ccc;border-radius:6px; }
+.layout .examInfo .userInfoTitle{  margin: 0 0 41px 37px; }
+.layout .examInfo .examTimeShow{ text-align:center;margin:10px 0 20px 0 }
+.layout .examInfo .examTimeShow .remaining{ color:#f00;}
+.layout .examInfo .examIntroduce{ margin-top:30px }
+.layout .examInfo .captach { cursor:pointer }
+.layout .examInfo .captachcontrol { width:57%;margin-right:43px;line-height:20px;height: 34px;padding: 6px 12px;background-color: #fff;border: 1px solid #ccc;border-radius: 4px;box-shadow:inset 0 1px 1px rgba(0,0,0,.075);webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s; }
+.layout .duration { font-weight:bolder }
+.layout .duration  p { margin-bottom:3px;font-weight:bolder }
+
+.layout .selectcontrol { width:97.5%;display:inline-block;height: 34px;padding: 6px 12px;background-color: #fff;border: 1px solid #ccc;border-radius: 4px;box-shadow:inset 0 1px 1px rgba(0,0,0,.075);webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s; }
+.layout .spanred { color: #f00;font-size:14px;font-weight:bolder  }
+
+.layout .userInof{  }
+.layout .userInof li{ clear:both;height:40px }
+.layout .userInfoSpan{ float:right;color:#ccc; }
+.layout .posChoose{ width:100%;border:1px solid #ccc;border-radius:4px;  }
+.layout .posChoose .posChooseLi { height:40px }
+.layout .posChoose .posChooseZone{ margin-top:20px; }
+.layout .poseChooseSelect b{ margin:10px 0;display:block; }
+.layout .poseChooseSelect p { margin:37px 0 5px 0;color:#f00; }
+.layout .posChooseLabel { margin-left:51px }
+.layout .posChooseLabel .posChooseLabelFirst { margin-right:6px }
+.layout .promisezone { margin-left:11%;width: 78% }
+.layout .promisezone .actives { background-color:#f5f5f5;text-align:left  }
+.layout .promise{ line-height:30px;color:#333 }
+
+.layout .timeCheck{ height:40px;border:1px solid #ccc;border-radius:4px;width:50%;float:right;line-height:40px;text-align:center; }
+.layout .pageNum { margin:39px 0; }
+.layout .pageNum li { float:left;padding:10px 15px ;border:1px solid #e6e6e6;background-color:#f6f6f6;margin-left:5px;cursor:pointer }
+.layout .pageNum .active{ background-color:#5cbee3 !important;;border:1px solid #5cbee3 !important;;color:#fff }
+.layout .pageNum .select{ background-color:#0099ff;border:1px solid #5cbee3;color:#fff }
+.layout .prev,.layout .next { width: 92px; }
+.layout .prev{ margin-right: 13px; }
+.layout .btn-set-pos{ margin-top:33px;margin-bottom:61px }
+.layout .btn-set-pos_a{ margin-top:33px;color:#00a2d4 }
+.layout .btnOffset{ margin-left: 39.666667%; }
+.layout .btnOffset_a{ margin-left: 42.666667%; }
+.layout .submitOffst { margin-left: 30%; }
+
+.layout .problems{ border:1px solid #ccc;border-radius:4px  }
+.layout .problems .showProblem{ background-color:#d9edf7;padding:10px 0 0 15px;padding-bottom:5px;margin-bottom:5px }
+.layout .showProblemLabel { margin-left:14px;display:block }
+.layout .problems .showAnswer { padding-left:15px; }
+.layout .problems .answerbox{ width:100%;margin:0 auto }
+.layout .prev,.layout .next{ color:#00a2d4 }
+.layout .exmodal{ position:absolute;bottom:1px;right:-8px;width:300px;height:182px;border:1px solid #999;border-radius: 4px;z-index: 4;background-color: #fff;display: none }
+.layout .exmodal .exbtn { position:absolute;width:30px;height:30px;line-height:30px;font-weight:bolder;right:-9px;top:0px }
+.layout .exmodal .info{ margin:auto;width:82%;margin-top: 61px;color:#5cbee3; }
+.layout .submitbtn {  }
+.layout .lgonOffset { margin-left: 11%; }
+
+.layout .answerzone { width:98%;margin:0 auto;border:1px solid #ccc;border-radius:4px;min-height:200px  }
+
+.divselect{ position:relative; }
+.divselect cite{width: 104%; height:30px;line-height:24px; display:block; color:#807a62; cursor:pointer;font-style:normal;padding-left:4px; padding-right:30px;margin:-2px 0 0 -10px;background:url('/images/xjt.png') no-repeat right center;}
+.divselect ul{ width:99%;padding-left: 3px;border:1px solid #3399fe; background-color:#ffffff; position:absolute; z-index:300; margin-top:-1px; display:none;left: 2px; }
+.divselect ul li{height:24px; line-height:24px;}
+.divselect ul li span { display:block;font-weight:bolder  }
+.divselect ul li a{display:block; height:24px; color:#333333; text-decoration:none; padding-left:10px; padding-right:10px;}
+.divselect ul li a:hover{background-color:#3399fe;color:#fff }
+.n{margin:10px auto; width:920px; border:1px solid #CCC;font-size:12px; line-height:30px;}
+.n a{ padding:0 4px; color:#333}
+
